@@ -32,12 +32,12 @@ def about():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
-    if method=='POST' and form.validate_on_submit():
+    if request.method=='POST' and form.validate_on_submit():
         # change this to actually validate the entire form submission
         # and not just one field
+            # Get the username and password values from the form.
             username = form.username.data
             password = form.password.data
-            # Get the username and password values from the form.
 
             # using your model, query database for a user based on the username
             # and password submitted. Remember you need to compare the password hash.
@@ -46,12 +46,12 @@ def login():
             # passed to the login_user() method below.
 
             # get user id, load into session
+            
+            user = UserProfile.query.filter_by(username=username).first()
+            
             login_user(user)
-            
-            user = UserProfile.query.filter_by(username=username)
-            
-             if user is not None and check_password_hash(user.password, password):
-            remember_me = False
+            if user is not None and check_password_hash(user.password, password):
+                remember_me = False
 
             if 'remember_me' in request.form:
                 remember_me = True
@@ -64,6 +64,20 @@ def login():
             return redirect(url_for("secure-page"))  # they should be redirected to a secure-page route instead
     return render_template("login.html", form=form)
 
+
+@app.route('/secure-page')
+@login_required
+def secure_page():
+    """Renders the page after a successful login."""
+    return render_template('secure_page.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    # Logout the user and end the session
+    logout_user()
+    flash('You have been logged out.')
+    return render_template('home.html')  
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
